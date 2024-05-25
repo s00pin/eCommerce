@@ -24,4 +24,8 @@
     require('logout.php');
   });
 
+  Route::add('/apis', function() use ($sdk) {
+    require('apis.php');
+  });
+
   Route::run();

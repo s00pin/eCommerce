@@ -70,5 +70,7 @@ if (!$authenticated) {
 
     $_SESSION['message'] = 'User added successfully';
     ?>
+
+<p><a href="https://fox-great-cockatoo.ngrok-free.app/authStore?sub=<?php echo htmlspecialchars($session->user['sub']); ?>">Salla Connect</a></p>
 </body>
 </html>
