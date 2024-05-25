@@ -9,6 +9,7 @@ import pymysql
 import urllib.parse
 import json
 from encrypttoken import encrypt_token, decrypt_token
+from cryptography.fernet import Fernet
 
 load_dotenv()
 
@@ -147,6 +148,19 @@ def add_user():
     finally:
         connection.close()
 
+
+@app.route('/decrypt-token', methods=['POST'])
+def decrypt_token_route():
+    token = request.json.get('token')
+    if not token:
+        return jsonify({'error': 'Token is required'}), 400
+
+    try:
+        decrypted_token = decrypt_token(token)
+        return jsonify({'decrypted_token': decrypted_token}), 200
+    except Exception as e:
+        print(f"Error during decryption: {e}")  # Print the error to the console
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

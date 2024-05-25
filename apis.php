@@ -1,4 +1,89 @@
 <?php
+$session = $sdk->getCredentials();
+$authenticated = $session !== null;
+
+if (!$authenticated) {
+    header('Location: /login');
+    exit;
+}
+
+printf('<p>Welcome, %s.</p>', htmlspecialchars($session->user['name']));
+printf('<p><pre>%s</pre></p>', htmlspecialchars($session->user['email']));
+
+// Database connection settings
+$servername = "localhost";
+$username = "root"; // Change this to your MySQL username
+$password = ""; // Change this to your MySQL password
+$dbname = "eCommerce";
+
+// Create connection
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Function to get token by user sub
+function getTokenByUserSub($conn, $userSub) {
+    $stmt = $conn->prepare("SELECT token FROM users WHERE sub = ?");
+    $stmt->bind_param("s", $userSub);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $token = null;
+    if ($row = $result->fetch_assoc()) {
+        $token = $row['token'];
+    }
+    $stmt->close();
+    return $token;
+    
+}
+
+// Get the user's sub
+$userSub = $session->user['sub'];
+$encryptedToken = getTokenByUserSub($conn, $userSub);
+
+if (!$encryptedToken) {
+    die("Error: Token not found for user.");
+}
+
+// Close the connection after fetching the token
+$conn->close();
+
+
+// Function to decrypt token via Flask endpoint
+function decryptToken($encryptedToken) {
+   $curl = curl_init();
+
+   $payload = json_encode(array("token" => $encryptedToken));
+
+   curl_setopt_array($curl, array(
+       CURLOPT_URL => 'http://localhost:5000/decrypt-token',
+       CURLOPT_RETURNTRANSFER => true,
+       CURLOPT_POST => true,
+       CURLOPT_HTTPHEADER => array(
+           'Content-Type: application/json',
+           'Content-Length: ' . strlen($payload)
+       ),
+       CURLOPT_POSTFIELDS => $payload,
+   ));
+
+   $response = curl_exec($curl);
+   curl_close($curl);
+
+   if ($response === false) {
+       return null;
+   }
+
+   $decodedResponse = json_decode($response, true);
+   return $decodedResponse['decrypted_token'] ?? null;
+}
+
+$token = decryptToken($encryptedToken);
+
+if (!$token) {
+    die("Error: Failed to decrypt token.");
+}
 
 $curl = curl_init();
 
@@ -13,7 +98,7 @@ curl_setopt_array($curl, array(
    CURLOPT_CUSTOMREQUEST => 'GET',
    CURLOPT_HTTPHEADER => array(
       'User-Agent: Apidog/1.0.0 (https://apidog.com)',
-      'Authorization: Bearer ory_at_h-jVvX3wVJFdRKmgQ9-dbgF8936l-D-znr7rsWFzAks.o86Daby_v8jLQnKovJ_msPEyHIlDliJnFk1Nw-IYDFg'
+      'Authorization: Bearer ' . $token
    ),
 ));
 
@@ -50,8 +135,7 @@ if ($response) {
 }
 
 
-?>
-<?php
+
 
 $curl = curl_init();
 
@@ -66,7 +150,7 @@ curl_setopt_array($curl, array(
    CURLOPT_CUSTOMREQUEST => 'GET',
    CURLOPT_HTTPHEADER => array(
       'User-Agent: Apidog/1.0.0 (https://apidog.com)',
-      'Authorization: Bearer ory_at_h-jVvX3wVJFdRKmgQ9-dbgF8936l-D-znr7rsWFzAks.o86Daby_v8jLQnKovJ_msPEyHIlDliJnFk1Nw-IYDFg'
+      'Authorization: Bearer ' . $token
    ),
 ));
 
@@ -101,9 +185,7 @@ if ($response) {
    echo "cURL Error: " . curl_error($curl);
 }
 
-?>
 
-<?php
 
 $curl = curl_init();
 
@@ -118,7 +200,7 @@ curl_setopt_array($curl, array(
    CURLOPT_CUSTOMREQUEST => 'GET',
    CURLOPT_HTTPHEADER => array(
       'User-Agent: Apidog/1.0.0 (https://apidog.com)',
-      'Authorization: Bearer ory_at_h-jVvX3wVJFdRKmgQ9-dbgF8936l-D-znr7rsWFzAks.o86Daby_v8jLQnKovJ_msPEyHIlDliJnFk1Nw-IYDFg'
+      'Authorization: Bearer ' . $token
    ),
 ));
 
@@ -155,8 +237,6 @@ if ($response) {
    echo "cURL Error: " . curl_error($curl);
 }
 
-?>
-<?php
 
 $curl = curl_init();
 
@@ -171,10 +251,9 @@ curl_setopt_array($curl, array(
    CURLOPT_CUSTOMREQUEST => 'GET',
    CURLOPT_HTTPHEADER => array(
       'User-Agent: Apidog/1.0.0 (https://apidog.com)',
-      'Authorization: Bearer ory_at_h-jVvX3wVJFdRKmgQ9-dbgF8936l-D-znr7rsWFzAks.o86Daby_v8jLQnKovJ_msPEyHIlDliJnFk1Nw-IYDFg'
+      'Authorization: Bearer ' . $token
    ),
 ));
-
 $response = curl_exec($curl);
 
 curl_close($curl);
@@ -213,8 +292,7 @@ if ($response) {
    echo "cURL Error: " . curl_error($curl);
 }
 
-?>
-<?php
+
 
 $curl = curl_init();
 
@@ -229,7 +307,7 @@ curl_setopt_array($curl, array(
    CURLOPT_CUSTOMREQUEST => 'GET',
    CURLOPT_HTTPHEADER => array(
       'User-Agent: Apidog/1.0.0 (https://apidog.com)',
-      'Authorization: Bearer ory_at_h-jVvX3wVJFdRKmgQ9-dbgF8936l-D-znr7rsWFzAks.o86Daby_v8jLQnKovJ_msPEyHIlDliJnFk1Nw-IYDFg'
+      'Authorization: Bearer ' . $token
    ),
 ));
 
@@ -274,8 +352,6 @@ if ($response) {
    echo "cURL Error: " . curl_error($curl);
 }
 
-?>
-<?php
 
 $curl = curl_init();
 
@@ -290,7 +366,7 @@ curl_setopt_array($curl, array(
    CURLOPT_CUSTOMREQUEST => 'GET',
    CURLOPT_HTTPHEADER => array(
       'User-Agent: Apidog/1.0.0 (https://apidog.com)',
-      'Authorization: Bearer ory_at_h-jVvX3wVJFdRKmgQ9-dbgF8936l-D-znr7rsWFzAks.o86Daby_v8jLQnKovJ_msPEyHIlDliJnFk1Nw-IYDFg'
+      'Authorization: Bearer ' . $token
    ),
 ));
 
