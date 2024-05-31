@@ -1,3 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Ecommerce</title>
+   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+<style>
+body {
+  margin: 1%;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.topnav {
+  overflow: hidden;
+  background-color: #333;
+}
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+.topnav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+.topnav a.active {
+  background-color: #04AA6D;
+  color: white;
+}
+.content {
+    margin: 20px;
+}
+.section {
+    margin-bottom: 40px;
+}
+.card {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    margin: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: inline-block; /* Add this line to make cards inline */
+    vertical-align: top; /* Align cards to the top of the container */
+    width: calc(33.33% - 20px); /* Adjust the width of each card, considering margin */
+    box-sizing: border-box; /* Include padding and border in the width calculation */
+}
+.card p {
+    margin: 5px 0;
+}
+.card img {
+    display: block;
+    margin: 10px 0;
+    max-width: 100px;
+}
+h2 {
+    color: #333;
+}
+</style>
+</head>
+<body>
+
+
 <?php
 $session = $sdk->getCredentials();
 $authenticated = $session !== null;
@@ -6,14 +72,44 @@ if (!$authenticated) {
     header('Location: /login');
     exit;
 }
+?>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="http://localhost:3000">Ecommerce</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="http://localhost:3000">Main Page</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="http://localhost:3000/apis">APIs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="http://localhost:3000/webhooks">Webhooks</a>
+                </li>
+                <li class="nav-item">
+                    <p class="nav-link">Welcome, <?php echo htmlspecialchars($session->user['name']); ?></p>
+                </li>
+                <li class="nav-item">
+                    <p class="nav-link"><pre><?php echo htmlspecialchars($session->user['email']); ?></pre></p>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+   <div class="container mt-4">
+      <div class="row">
+         <div class="col">
 
-printf('<p>Welcome, %s.</p>', htmlspecialchars($session->user['name']));
-printf('<p><pre>%s</pre></p>', htmlspecialchars($session->user['email']));
 
+<?php
 // Database connection settings
 $servername = "localhost";
-$username = "root"; // Change this to your MySQL username
-$password = ""; // Change this to your MySQL password
+$username = "root"; 
+$password = ""; 
 $dbname = "eCommerce";
 
 // Create connection
@@ -80,22 +176,21 @@ function decryptToken($encryptedToken) {
 }
 
 $token = decryptToken($encryptedToken);
-
 if (!$token) {
     die("Error: Failed to decrypt token.");
 }
 
+// Inline CSS for styling
+
+
+echo '<div class="content">';
+
+// Fetch and display orders
 $curl = curl_init();
 
 curl_setopt_array($curl, array(
    CURLOPT_URL => 'https://api.salla.dev/admin/v2/orders',
    CURLOPT_RETURNTRANSFER => true,
-   CURLOPT_ENCODING => '',
-   CURLOPT_MAXREDIRS => 10,
-   CURLOPT_TIMEOUT => 0,
-   CURLOPT_FOLLOWLOCATION => true,
-   CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-   CURLOPT_CUSTOMREQUEST => 'GET',
    CURLOPT_HTTPHEADER => array(
       'User-Agent: Apidog/1.0.0 (https://apidog.com)',
       'Authorization: Bearer ' . $token
@@ -103,51 +198,37 @@ curl_setopt_array($curl, array(
 ));
 
 $response = curl_exec($curl);
-
 curl_close($curl);
 
 if ($response) {
-   // Decode JSON response to an array
    $decodedResponse = json_decode($response, true);
 
-   // Extract important fields and generate HTML
-   $html = '<div>';
+   echo '<div class="section"><h2>Orders</h2>';
    foreach ($decodedResponse['data'] as $order) {
-      $html .= '<div>';
-      $html .= '<p>ID: ' . htmlspecialchars($order['id']) . '</p>';
-      $html .= '<p>Reference ID: ' . htmlspecialchars($order['reference_id']) . '</p>';
-      $html .= '<p>Total Amount: ' . htmlspecialchars($order['total']['amount']) . ' ' . htmlspecialchars($order['total']['currency']) . '</p>';
-      $html .= '<p>Date: ' . htmlspecialchars($order['date']['date']) . '</p>';
-      $html .= '<p>Status: ' . htmlspecialchars($order['status']['name']) . '</p>';
+      echo '<div class="card">';
+      echo '<p><strong>ID:</strong> ' . htmlspecialchars($order['id']) . '</p>';
+      echo '<p><strong>Reference ID:</strong> ' . htmlspecialchars($order['reference_id']) . '</p>';
+      echo '<p><strong>Total Amount:</strong> ' . htmlspecialchars($order['total']['amount']) . ' ' . htmlspecialchars($order['total']['currency']) . '</p>';
+      echo '<p><strong>Date:</strong> ' . htmlspecialchars($order['date']['date']) . '</p>';
+      echo '<p><strong>Status:</strong> ' . htmlspecialchars($order['status']['name']) . '</p>';
       if (isset($order['customer'])) {
-         $html .= '<p>Customer: ' . htmlspecialchars($order['customer']['first_name']) . ' ' . htmlspecialchars($order['customer']['last_name']) . '</p>';
-         $html .= '<p>Customer Email: ' . htmlspecialchars($order['customer']['email']) . '</p>';
-         $html .= '<p>Customer Mobile: ' . htmlspecialchars($order['customer']['mobile_code']) . ' ' . htmlspecialchars($order['customer']['mobile']) . '</p>';
+         echo '<p><strong>Customer:</strong> ' . htmlspecialchars($order['customer']['first_name']) . ' ' . htmlspecialchars($order['customer']['last_name']) . '</p>';
+         echo '<p><strong>Customer Email:</strong> ' . htmlspecialchars($order['customer']['email']) . '</p>';
+         echo '<p><strong>Customer Mobile:</strong> ' . htmlspecialchars($order['customer']['mobile_code']) . ' ' . htmlspecialchars($order['customer']['mobile']) . '</p>';
       }
-      $html .= '</div><br>';
+      echo '</div>';
    }
-   $html .= '</div>';
-
-   // Output the HTML
-   echo $html;
+   echo '</div>';
 } else {
    echo "cURL Error: " . curl_error($curl);
 }
 
-
-
-
+// Fetch and display products
 $curl = curl_init();
 
 curl_setopt_array($curl, array(
    CURLOPT_URL => 'https://api.salla.dev/admin/v2/products',
    CURLOPT_RETURNTRANSFER => true,
-   CURLOPT_ENCODING => '',
-   CURLOPT_MAXREDIRS => 10,
-   CURLOPT_TIMEOUT => 0,
-   CURLOPT_FOLLOWLOCATION => true,
-   CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-   CURLOPT_CUSTOMREQUEST => 'GET',
    CURLOPT_HTTPHEADER => array(
       'User-Agent: Apidog/1.0.0 (https://apidog.com)',
       'Authorization: Bearer ' . $token
@@ -155,29 +236,23 @@ curl_setopt_array($curl, array(
 ));
 
 $response = curl_exec($curl);
-
 curl_close($curl);
 
 if ($response) {
-   // Decode JSON response to an array
    $decodedResponse = json_decode($response, true);
 
-   // Extract important fields and generate HTML
    if ($decodedResponse['status'] == 200 && $decodedResponse['success'] == true) {
-       $html = '<div>';
+       echo '<div class="section"><h2>Products</h2>';
        foreach ($decodedResponse['data'] as $product) {
-           $html .= '<div>';
-           $html .= '<p>ID: ' . htmlspecialchars($product['id']) . '</p>';
-           $html .= '<p>Name: ' . htmlspecialchars($product['name']) . '</p>';
-           $html .= '<p>SKU: ' . htmlspecialchars($product['sku']) . '</p>';
-           $html .= '<p>Price: ' . htmlspecialchars($product['price']['amount']) . ' ' . htmlspecialchars($product['price']['currency']) . '</p>';
-           $html .= '<img src="' . htmlspecialchars($product['thumbnail']) . '" alt="Product Image" style="width:100px;">';
-           $html .= '</div><br>';
+           echo '<div class="card">';
+           echo '<p><strong>ID:</strong> ' . htmlspecialchars($product['id']) . '</p>';
+           echo '<p><strong>Name:</strong> ' . htmlspecialchars($product['name']) . '</p>';
+           echo '<p><strong>SKU:</strong> ' . htmlspecialchars($product['sku']) . '</p>';
+           echo '<p><strong>Price:</strong> ' . htmlspecialchars($product['price']['amount']) . ' ' . htmlspecialchars($product['price']['currency']) . '</p>';
+           echo '<img src="' . htmlspecialchars($product['thumbnail']) . '" alt="Product Image">';
+           echo '</div>';
        }
-       $html .= '</div>';
-
-       // Output the HTML
-       echo $html;
+       echo '</div>';
    } else {
        echo '<p>Failed to retrieve data.</p>';
    }
@@ -185,19 +260,12 @@ if ($response) {
    echo "cURL Error: " . curl_error($curl);
 }
 
-
-
+// Fetch and display customers
 $curl = curl_init();
 
 curl_setopt_array($curl, array(
    CURLOPT_URL => 'https://api.salla.dev/admin/v2/customers',
    CURLOPT_RETURNTRANSFER => true,
-   CURLOPT_ENCODING => '',
-   CURLOPT_MAXREDIRS => 10,
-   CURLOPT_TIMEOUT => 0,
-   CURLOPT_FOLLOWLOCATION => true,
-   CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-   CURLOPT_CUSTOMREQUEST => 'GET',
    CURLOPT_HTTPHEADER => array(
       'User-Agent: Apidog/1.0.0 (https://apidog.com)',
       'Authorization: Bearer ' . $token
@@ -205,31 +273,25 @@ curl_setopt_array($curl, array(
 ));
 
 $response = curl_exec($curl);
-
 curl_close($curl);
 
 if ($response) {
-   // Decode JSON response to an array
    $decodedResponse = json_decode($response, true);
 
-   // Extract important fields and generate HTML
    if ($decodedResponse['status'] == 200 && $decodedResponse['success'] == true) {
-       $html = '<div>';
+       echo '<div class="section"><h2>Customers</h2>';
        foreach ($decodedResponse['data'] as $customer) {
-           $html .= '<div>';
-           $html .= '<p>ID: ' . htmlspecialchars($customer['id']) . '</p>';
-           $html .= '<p>First Name: ' . htmlspecialchars($customer['first_name']) . '</p>';
-           $html .= '<p>Last Name: ' . htmlspecialchars($customer['last_name']) . '</p>';
-           $html .= '<p>Mobile: ' . htmlspecialchars($customer['mobile']) . '</p>';
-           $html .= '<p>Email: ' . htmlspecialchars($customer['email']) . '</p>';
-           $html .= '<p>Country: ' . htmlspecialchars($customer['country']) . '</p>';
-           $html .= '<img src="' . htmlspecialchars($customer['avatar']) . '" alt="Customer Avatar" style="width:100px;">';
-           $html .= '</div><br>';
+           echo '<div class="card">';
+           echo '<p><strong>ID:</strong> ' . htmlspecialchars($customer['id']) . '</p>';
+           echo '<p><strong>First Name:</strong> ' . htmlspecialchars($customer['first_name']) . '</p>';
+           echo '<p><strong>Last Name:</strong> ' . htmlspecialchars($customer['last_name']) . '</p>';
+           echo '<p><strong>Mobile:</strong> ' . htmlspecialchars($customer['mobile']) . '</p>';
+           echo '<p><strong>Email:</strong> ' . htmlspecialchars($customer['email']) . '</p>';
+           echo '<p><strong>Country:</strong> ' . htmlspecialchars($customer['country']) . '</p>';
+           echo '<img src="' . htmlspecialchars($customer['avatar']) . '" alt="Customer Avatar">';
+           echo '</div>';
        }
-       $html .= '</div>';
-
-       // Output the HTML
-       echo $html;
+       echo '</div>';
    } else {
        echo '<p>Failed to retrieve data.</p>';
    }
@@ -237,67 +299,11 @@ if ($response) {
    echo "cURL Error: " . curl_error($curl);
 }
 
-
+// Fetch and display invoices
 $curl = curl_init();
 
 curl_setopt_array($curl, array(
-   CURLOPT_URL => 'https://api.salla.dev/admin/v2/orders/invoices?from_date=&to_date=&order_id=',
-   CURLOPT_RETURNTRANSFER => true,
-   CURLOPT_ENCODING => '',
-   CURLOPT_MAXREDIRS => 10,
-   CURLOPT_TIMEOUT => 0,
-   CURLOPT_FOLLOWLOCATION => true,
-   CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-   CURLOPT_CUSTOMREQUEST => 'GET',
-   CURLOPT_HTTPHEADER => array(
-      'User-Agent: Apidog/1.0.0 (https://apidog.com)',
-      'Authorization: Bearer ' . $token
-   ),
-));
-$response = curl_exec($curl);
-
-curl_close($curl);
-
-if ($response) {
-   // Decode JSON response to an array
-   $decodedResponse = json_decode($response, true);
-
-   // Extract important fields and generate HTML
-   if ($decodedResponse['status'] == 200 && $decodedResponse['success'] == true) {
-       $html = '<div>';
-       foreach ($decodedResponse['data'] as $invoice) {
-           $html .= '<div>';
-           $html .= '<p>Invoice ID: ' . htmlspecialchars($invoice['id']) . '</p>';
-           $html .= '<p>Invoice Number: ' . htmlspecialchars($invoice['invoice_number']) . '</p>';
-           $html .= '<p>Order ID: ' . htmlspecialchars($invoice['order_id']) . '</p>';
-           $html .= '<p>Type: ' . htmlspecialchars($invoice['type']) . '</p>';
-           $html .= '<p>Date: ' . htmlspecialchars($invoice['date']) . '</p>';
-           $html .= '<p>Payment Method: ' . htmlspecialchars($invoice['payment_method']) . '</p>';
-           $html .= '<p>Sub Total: ' . htmlspecialchars($invoice['sub_total']['amount']) . ' ' . htmlspecialchars($invoice['sub_total']['currency']) . '</p>';
-           $html .= '<p>Shipping Cost: ' . htmlspecialchars($invoice['shipping_cost']['amount']) . ' ' . htmlspecialchars($invoice['shipping_cost']['currency']) . '</p>';
-           $html .= '<p>COD Cost: ' . htmlspecialchars($invoice['cod_cost']['amount']) . ' ' . htmlspecialchars($invoice['cod_cost']['currency']) . '</p>';
-           $html .= '<p>Discount: ' . htmlspecialchars($invoice['discount']['amount']) . ' ' . htmlspecialchars($invoice['discount']['currency']) . '</p>';
-           $html .= '<p>Tax: ' . htmlspecialchars($invoice['tax']['amount']['amount']) . ' ' . htmlspecialchars($invoice['tax']['amount']['currency']) . ' (' . htmlspecialchars($invoice['tax']['percent']) . '%)</p>';
-           $html .= '<p>Total: ' . htmlspecialchars($invoice['total']['amount']) . ' ' . htmlspecialchars($invoice['total']['currency']) . '</p>';
-           $html .= '</div><br>';
-       }
-       $html .= '</div>';
-
-       // Output the HTML
-       echo $html;
-   } else {
-       echo '<p>Failed to retrieve data.</p>';
-   }
-} else {
-   echo "cURL Error: " . curl_error($curl);
-}
-
-
-
-$curl = curl_init();
-
-curl_setopt_array($curl, array(
-   CURLOPT_URL => 'https://api.salla.dev/admin/v2/coupons',
+   CURLOPT_URL => 'https://api.salla.dev/admin/v2/orders/invoices?from_date&to_date&order_id',
    CURLOPT_RETURNTRANSFER => true,
    CURLOPT_ENCODING => '',
    CURLOPT_MAXREDIRS => 10,
@@ -316,94 +322,51 @@ $response = curl_exec($curl);
 curl_close($curl);
 
 if ($response) {
-   // Decode JSON response to an array
-   $decodedResponse = json_decode($response, true);
+    $decodedResponse = json_decode($response, true);
 
-   // Extract important fields and generate HTML
-   if ($decodedResponse['status'] == 200 && $decodedResponse['success'] == true) {
-       $html = '<div>';
-       foreach ($decodedResponse['data'] as $coupon) {
-           $html .= '<div>';
-           $html .= '<p>Coupon ID: ' . htmlspecialchars($coupon['id']) . '</p>';
-           $html .= '<p>Code: ' . htmlspecialchars($coupon['code']) . '</p>';
-           $html .= '<p>Type: ' . htmlspecialchars($coupon['type']) . '</p>';
-           $html .= '<p>Status: ' . htmlspecialchars($coupon['status']) . '</p>';
-           $html .= '<p>Amount: ' . htmlspecialchars($coupon['amount']['amount']) . ' ' . htmlspecialchars($coupon['amount']['currency']) . '</p>';
-           $html .= '<p>Maximum Amount: ' . htmlspecialchars($coupon['maximum_amount']['amount']) . ' ' . htmlspecialchars($coupon['maximum_amount']['currency']) . '</p>';
-           $html .= '<p>Expiry Date: ' . htmlspecialchars($coupon['expiry_date']) . '</p>';
-           $html .= '<p>Start Date: ' . htmlspecialchars($coupon['start_date']) . '</p>';
-           $html .= '<p>Free Shipping: ' . ($coupon['free_shipping'] ? 'Yes' : 'No') . '</p>';
-           $html .= '<p>Usage Limit: ' . htmlspecialchars($coupon['usage_limit']) . '</p>';
-           $html .= '<p>Usage Limit Per User: ' . htmlspecialchars($coupon['usage_limit_per_user']) . '</p>';
-           $html .= '<p>Applied In: ' . htmlspecialchars($coupon['applied_in']) . '</p>';
-           $html .= '<p>Number of Usages: ' . htmlspecialchars($coupon['statistics']['num_of_usage']) . '</p>';
-           $html .= '<p>Number of Customers: ' . htmlspecialchars($coupon['statistics']['num_of_customers']) . '</p>';
-           $html .= '<p>Coupon Sales: ' . htmlspecialchars($coupon['statistics']['coupon_sales']['amount']) . ' ' . htmlspecialchars($coupon['statistics']['coupon_sales']['currency']) . '</p>';
-           $html .= '</div><br>';
-       }
-       $html .= '</div>';
-
-       // Output the HTML
-       echo $html;
-   } else {
-       echo '<p>Failed to retrieve data.</p>';
-   }
+    if ($decodedResponse['status'] == 200 && $decodedResponse['success'] == true) {
+        echo '<div class="section"><h2>Invoices</h2>';
+        foreach ($decodedResponse['data'] as $invoice) {
+            echo '<div class="card">';
+            echo '<p><strong>ID:</strong> ' . htmlspecialchars($invoice['id']) . '</p>';
+            echo '<p><strong>Invoice Number:</strong> ' . htmlspecialchars($invoice['invoice_number']) . '</p>';
+            echo '<p><strong>Order ID:</strong> ' . htmlspecialchars($invoice['order_id']) . '</p>';
+            echo '<p><strong>Invoice Type:</strong> ' . htmlspecialchars($invoice['type']) . '</p>';
+            echo '<p><strong>Date:</strong> ' . htmlspecialchars($invoice['date']) . '</p>';
+            echo '<p><strong>Payment Method:</strong> ' . htmlspecialchars($invoice['payment_method']) . '</p>';
+            echo '<p><strong>Sub Total:</strong> ' . htmlspecialchars($invoice['sub_total']['amount']) . ' ' . htmlspecialchars($invoice['sub_total']['currency']) . '</p>';
+            echo '<p><strong>Shipping Cost:</strong> ' . htmlspecialchars($invoice['shipping_cost']['amount']) . ' ' . htmlspecialchars($invoice['shipping_cost']['currency']) . '</p>';
+            echo '<p><strong>COD Cost:</strong> ' . htmlspecialchars($invoice['cod_cost']['amount']) . ' ' . htmlspecialchars($invoice['cod_cost']['currency']) . '</p>';
+            echo '<p><strong>Discount:</strong> ' . htmlspecialchars($invoice['discount']['amount']) . ' ' . htmlspecialchars($invoice['discount']['currency']) . '</p>';
+            echo '<p><strong>Tax Percent:</strong> ' . htmlspecialchars($invoice['tax']['percent']) . '</p>';
+            echo '<p><strong>Total Amount:</strong> ' . htmlspecialchars($invoice['total']['amount']) . ' ' . htmlspecialchars($invoice['total']['currency']) . '</p>';
+            echo '</div>';
+        }
+        echo '</div>';
+    } else {
+        echo '<p>Failed to retrieve data.</p>';
+    }
 } else {
-   echo "cURL Error: " . curl_error($curl);
+    echo "cURL Error: " . curl_error($curl);
 }
 
 
-$curl = curl_init();
-
-curl_setopt_array($curl, array(
-   CURLOPT_URL => 'https://api.salla.dev/admin/v2/orders/statuses',
-   CURLOPT_RETURNTRANSFER => true,
-   CURLOPT_ENCODING => '',
-   CURLOPT_MAXREDIRS => 10,
-   CURLOPT_TIMEOUT => 0,
-   CURLOPT_FOLLOWLOCATION => true,
-   CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-   CURLOPT_CUSTOMREQUEST => 'GET',
-   CURLOPT_HTTPHEADER => array(
-      'User-Agent: Apidog/1.0.0 (https://apidog.com)',
-      'Authorization: Bearer ' . $token
-   ),
-));
-
-$response = curl_exec($curl);
-
-curl_close($curl);
-
-if ($response) {
-   // Decode JSON response to an array
-   $decodedResponse = json_decode($response, true);
-
-   // Extract important fields and generate HTML
-   if ($decodedResponse['status'] == 200 && $decodedResponse['success'] == true) {
-       $html = '<div>';
-       foreach ($decodedResponse['data'] as $status) {
-           $html .= '<div>';
-           $html .= '<p>Status ID: ' . htmlspecialchars($status['id']) . '</p>';
-           $html .= '<p>Name: ' . htmlspecialchars($status['name']) . '</p>';
-           $html .= '<p>Type: ' . htmlspecialchars($status['type']) . '</p>';
-           $html .= '<p>Slug: ' . htmlspecialchars($status['slug']) . '</p>';
-           $html .= '<p>Sort Order: ' . htmlspecialchars($status['sort']) . '</p>';
-           $html .= '<p>Icon: ' . htmlspecialchars($status['icon']) . '</p>';
-           $html .= '<p>Is Active: ' . ($status['is_active'] ? 'Yes' : 'No') . '</p>';
-           $html .= '</div><br>';
-       }
-       $html .= '</div>';
-
-       // Output the HTML
-       echo $html;
-   } else {
-       echo '<p>Failed to retrieve data.</p>';
-   }
-} else {
-   echo "cURL Error: " . curl_error($curl);
-}
-
+echo '</div>';
 ?>
+ </div>
+      </div>
+   </div>
 
 
 
+   <footer>
+      <div class="container">
+         <p>&copy; 2024 Ecommerce Website. All rights reserved.</p>
+      </div>
+   </footer>
+   <script src="https://kit.fontawesome.com/2363f97efc.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+
+</body>
+</html>

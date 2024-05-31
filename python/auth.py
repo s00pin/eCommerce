@@ -10,7 +10,7 @@ import urllib.parse
 import json
 from encrypttoken import encrypt_token, decrypt_token
 from cryptography.fernet import Fernet
-
+from write import subscribe_all_webhooks, save_api_data
 load_dotenv()
 
 
@@ -35,6 +35,8 @@ def connect_to_mysql():
                            db=mysql_db,
                            charset='utf8mb4',
                            cursorclass=pymysql.cursors.DictCursor)
+
+
 
 @app.route('/authStore')
 def storeauth():
@@ -82,6 +84,7 @@ def callback():
         headers = {'Authorization': f'Bearer {access_token}'}
         store_info_response = requests.get(SALLA_STORE_INFO_URL, headers=headers)
         access_token = encrypt_token(access_token)
+        
         if store_info_response.status_code == 200:
             # Save the access token to the user's record in the database
             connection = connect_to_mysql()
@@ -91,16 +94,31 @@ def callback():
                     if cursor.rowcount == 0:
                         return jsonify({'error': 'User not found'}), 404
                     connection.commit()
-                return jsonify(store_info_response.json())
+
+                    # Check if the user has been initialized
+                    cursor.execute("SELECT initialization FROM users WHERE sub = %s", (sub,))
+                    init_result = cursor.fetchone()
+                    if init_result and init_result['initialization'] == 'NO':
+                        print(init_result['initialization'])
+                        subscribe_all_webhooks(access_token)
+                        save_api_data(sub, access_token)
+
+                        cursor.execute("UPDATE users SET initialization = 'YES' WHERE sub = %s", (sub,))
+                        connection.commit()
+
             except Exception as e:
                 connection.rollback()
                 return jsonify({'error': 'Database error', 'details': str(e)}), 500
             finally:
                 connection.close()
+
+            return redirect('http://localhost:3000/')
         else:
             return jsonify({'error': 'Failed to fetch store info', 'details': store_info_response.text}), store_info_response.status_code
+
     else:
         return jsonify({'error': 'Failed to receive token', 'details': token_response.text}), token_response.status_code
+
 
     
 @app.route('/webhook', methods=['POST'])

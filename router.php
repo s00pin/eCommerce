@@ -28,4 +28,8 @@
     require('apis.php');
   });
 
+  Route::add('/webhooks', function() use ($sdk) {
+    require('webhooks.php');
+  });
+
   Route::run();
